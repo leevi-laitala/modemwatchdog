@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 )
 
+// Interface with virtual python "smartplug"
+
 type PythonPlug struct {
 	apiUrl string
 	apiTurnOff string

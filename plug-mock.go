@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// Mock plug that always works
 type MockPlug struct {}
 
 var status bool = false

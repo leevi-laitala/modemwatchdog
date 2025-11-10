@@ -9,14 +9,20 @@ import (
 )
 
 func initLogging() {
-	addr := fmt.Sprintf("%s:%d", syslogAddr, syslogPort)
+	// Use stdout by default
+	var writer io.Writer = os.Stdout
 
-	writer, err := syslog.Dial(syslogProtocol, addr, syslog.LOG_INFO | syslog.LOG_DAEMON, "modemwatchdog")
-	if err != nil {
-		log.Fatalf("Failed to connect to syslog: %v", err)
+	// Use syslog if server is defined
+	if logSyslogAddr != "" {
+		var err error
+
+		addr := fmt.Sprintf("%s:%d", logSyslogAddr, logSyslogPort)
+
+		writer, err = syslog.Dial(logSyslogProtocol, addr, syslog.LOG_INFO | syslog.LOG_DAEMON, "modemwatchdog")
+		if err != nil {
+			log.Fatalf("Failed to connect to syslog: %v", err)
+		}
 	}
 
-	mw := io.MultiWriter(os.Stdout, writer)
-
-	log.SetOutput(mw)
+	log.SetOutput(writer)
 }

@@ -7,16 +7,17 @@ import (
 )
 
 func ping() bool {
-	for _, url := range urls {
+	// Send head request to each url
+	for _, url := range pingUrls {
 		resp, err := http.Head(url)
 
 		if err == nil && resp.StatusCode < 400 {
 			resp.Body.Close()
 			return true
 		}
-
 	}
 
+	// If connection to all urls fail, internet access is probably down
 	return false
 }
 
@@ -27,7 +28,7 @@ func modemwatchdog(plug SmartPlug) {
 		netconnection := ping()
 
 		if !netconnection {
-			log.Println("No network connection")
+			log.Println("No internet connection")
 
 			err := powercycleModem(plug)
 			if err != nil {

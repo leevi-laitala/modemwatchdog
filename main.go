@@ -7,30 +7,10 @@ import (
 	"syscall"
 )
 
-const (
-	pingInterval = 10
-
-	powercyclePeriod = 5
-	powercycleRetries = 10
-	powercycleReqRestartInterval = 3
-
-	syslogAddr = "logger.internal.bebanen.com"
-	syslogPort = 514
-	syslogProtocol = "tcp"
-)
-
-var urls = []string{
-	"http://127.0.0.1:5000/gen_204",
-}
-
-//var urls = []string{
-//	"https://www.google.com/generate_204",
-//	"https://1.1.1.1/cdn-cgi/trace",
-//}
-
 func main() {
 	initLogging()
 
+	// Capture termination signals
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -40,10 +20,6 @@ func main() {
 		}
 	}()
 
-	modemwatchdog(PythonPlug{
-		apiUrl: "http://127.0.0.1:5000/api",
-		apiTurnOff: "/turnoff",
-		apiTurnOn: "/turnon",
-		apiStatus: "/status",
-	})
+	plug := initPlug()
+	modemwatchdog(plug)
 }

@@ -25,13 +25,16 @@ func retryFunc[T any](maxRetries int, interval time.Duration, f func() (T, error
 		if err == nil {
 			break
 		}
+
 		log.Printf("Retrying... Attempt %d out of %d attempts. Error: %v", retry, maxRetries, err)
+
 		time.Sleep(interval)
 	}
 
 	return res, err
 }
 
+// Turn off power, wait for some time and turn power back on
 func powercycleModem(plug SmartPlug) error {
 	var (
 		err  error
@@ -40,20 +43,24 @@ func powercycleModem(plug SmartPlug) error {
 
 	log.Println("Attempting powercycle")
 
-	isOn, err = retryFunc(powercycleRetries, powercycleReqRestartInterval*time.Second, plug.checkStatus)
+	// Check initial status
+	isOn, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, plug.checkStatus)
 	if err != nil {
 		log.Printf("Cannot check plug status. Assuming power on...")
 	}
 
+	// Skip turning off if already off. This may be due to failed powercycle
 	if !isOn {
-		_, err = retryFunc(powercycleRetries, powercycleReqRestartInterval*time.Second, func() (struct{}, error) {
+		// Send poweroff signal
+		_, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, func() (struct{}, error) {
 			return struct{}{}, plug.turnOff()
 		})
 		if err != nil {
 			return fmt.Errorf("Failed to power off: %v", err)
 		}
 
-		isOn, err = retryFunc(powercycleRetries, powercycleReqRestartInterval*time.Second, plug.checkStatus)
+		// Check status
+		isOn, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, plug.checkStatus)
 		if err != nil || isOn {
 			return fmt.Errorf("Plug status cloud not be powered off: %v", err)
 		}
@@ -61,17 +68,19 @@ func powercycleModem(plug SmartPlug) error {
 
 	log.Printf("Plug is powered off")
 
-	log.Printf("Waiting for %d seconds before turning power back on", powercyclePeriod)
-	time.Sleep(powercyclePeriod * time.Second)
+	log.Printf("Waiting for %d seconds before turning power back on", powercycleDuration)
+	time.Sleep(powercycleDuration * time.Second)
 
-	_, err = retryFunc(powercycleRetries, powercyclePeriod*time.Second, func() (struct{}, error) {
+	// Send poweron signal
+	_, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, func() (struct{}, error) {
 		return struct{}{}, plug.turnOn()
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to power on")
 	}
 
-	isOn, err = retryFunc(powercycleRetries, powercyclePeriod*time.Second, plug.checkStatus)
+	// Check status
+	isOn, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, plug.checkStatus)
 	if err != nil || !isOn {
 		return fmt.Errorf("Failed to powercycle: Plug status cloud not be powered on")
 	}
