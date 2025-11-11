@@ -21,5 +21,6 @@ func main() {
 	}()
 
 	plug := initPlug()
+
 	modemwatchdog(plug)
 }

@@ -42,6 +42,8 @@ To make this work with any smart plug, you need to make a new plug struct and im
 
 In `conf.go` there is a function `initPlug` that returns the common interface. Inside the function the struct of choice is be constructed.
 
+My deployment uses Shelly Plug S Gen3, for which there is existing implementation `ShellyPlug`
+
 ##### Virtual plugs
 
 There are two virtual "smart plugs": `PythonPlug` and `MockPlug`. PythonPlug is a separate program with exposed REST API. However only every third request is set to succeed. MockPlug is implemented in the `modemwatchdog` and is set to work every time.

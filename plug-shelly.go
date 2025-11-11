@@ -5,16 +5,14 @@ import (
 	"io"
 )
 
-// Interface with virtual python "smartplug"
-
-type PythonPlug struct {
+type ShellyPlug struct {
 	apiUrl     string
 	apiTurnOff string
 	apiTurnOn  string
 	apiStatus  string
 }
 
-func (p PythonPlug) checkStatus() (bool, error) {
+func (p ShellyPlug) checkStatus() (bool, error) {
 	resp, err := makeReq("GET", p.apiUrl+p.apiStatus)
 	if err != nil {
 		return false, err
@@ -28,15 +26,15 @@ func (p PythonPlug) checkStatus() (bool, error) {
 
 	var data map[string]any
 	err = json.Unmarshal([]byte(body), &data)
-	if err != nil || data["success"] != nil {
+	if err != nil {
 		return false, err
 	}
 
-	return data["currentStatus"] == "on", nil
+	return data["output"] == true, nil
 }
 
-func (p PythonPlug) turnOn() error {
-	resp, err := makeReq("POST", p.apiUrl+p.apiTurnOn)
+func (p ShellyPlug) turnOn() error {
+	resp, err := makeReq("GET", p.apiUrl+p.apiTurnOn)
 	if err != nil {
 		return err
 	}
@@ -49,15 +47,15 @@ func (p PythonPlug) turnOn() error {
 
 	var data map[string]any
 	err = json.Unmarshal([]byte(body), &data)
-	if err != nil || data["success"] != nil {
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (p PythonPlug) turnOff() error {
-	resp, err := makeReq("POST", p.apiUrl+p.apiTurnOff)
+func (p ShellyPlug) turnOff() error {
+	resp, err := makeReq("GET", p.apiUrl+p.apiTurnOff)
 	if err != nil {
 		return err
 	}
@@ -70,7 +68,7 @@ func (p PythonPlug) turnOff() error {
 
 	var data map[string]any
 	err = json.Unmarshal([]byte(body), &data)
-	if err != nil || data["success"] != nil {
+	if err != nil {
 		return err
 	}
 

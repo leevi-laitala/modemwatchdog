@@ -1,9 +1,10 @@
 package main
 
 import (
-	"log"
-	"time"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
 )
 
 type SmartPlug interface {
@@ -12,6 +13,28 @@ type SmartPlug interface {
 
 	turnOn() error
 	turnOff() error
+}
+
+var client = http.Client{
+	Timeout: 5 * time.Second,
+}
+
+func makeReq(method string, url string) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("response failed with http code %d", resp.StatusCode)
+	}
+
+	return resp, nil
 }
 
 func retryFunc[T any](maxRetries int, interval time.Duration, f func() (T, error)) (T, error) {
@@ -50,19 +73,19 @@ func powercycleModem(plug SmartPlug) error {
 	}
 
 	// Skip turning off if already off. This may be due to failed powercycle
-	if !isOn {
+	if isOn {
 		// Send poweroff signal
 		_, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, func() (struct{}, error) {
 			return struct{}{}, plug.turnOff()
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to power off: %v", err)
+			return fmt.Errorf("failed to power off: %v", err)
 		}
 
 		// Check status
 		isOn, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, plug.checkStatus)
 		if err != nil || isOn {
-			return fmt.Errorf("Plug status cloud not be powered off: %v", err)
+			return fmt.Errorf("plug status cloud not be powered off: %v", err)
 		}
 	}
 
@@ -76,13 +99,13 @@ func powercycleModem(plug SmartPlug) error {
 		return struct{}{}, plug.turnOn()
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to power on")
+		return fmt.Errorf("failed to power on")
 	}
 
 	// Check status
 	isOn, err = retryFunc(powercycleRetries, powercycleRetryWait*time.Second, plug.checkStatus)
 	if err != nil || !isOn {
-		return fmt.Errorf("Failed to powercycle: Plug status cloud not be powered on")
+		return fmt.Errorf("failed to powercycle: Plug status cloud not be powered on")
 	}
 
 	log.Printf("Powercycle succeeded")
