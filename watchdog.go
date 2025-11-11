@@ -25,9 +25,13 @@ func modemwatchdog(plug SmartPlug) {
 	log.Println("Modem watchdog started")
 
 	for {
-		netconnection := ping()
+		if !ping() {
+			// Check again after a short period
+			time.Sleep(pingInterval * time.Second)
+			if ping() {
+				continue
+			}
 
-		if !netconnection {
 			log.Println("No internet connection")
 
 			err := powercycleModem(plug)
