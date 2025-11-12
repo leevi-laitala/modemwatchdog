@@ -15,10 +15,6 @@ type SmartPlug interface {
 	turnOff() error
 }
 
-var client = http.Client{
-	Timeout: 5 * time.Second,
-}
-
 func makeReq(method string, url string) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {

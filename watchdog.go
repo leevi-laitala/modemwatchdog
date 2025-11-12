@@ -3,14 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 )
 
 func ping() bool {
 	// Send head request to each url
 	for _, url := range pingUrls {
-		resp, err := http.Head(url)
+		resp, err := client.Head(url)
 
 		if err == nil && resp.StatusCode < 400 {
 			resp.Body.Close()

@@ -1,5 +1,10 @@
 package main
 
+import (
+	"net/http"
+	"time"
+)
+
 const ( // Time vars are in seconds
 	pingInterval = 10
 
@@ -13,6 +18,10 @@ const ( // Time vars are in seconds
 	logSyslogPort     = 514
 	logSyslogProtocol = "tcp"
 )
+
+var client = http.Client{
+	Timeout: 5 * time.Second,
+}
 
 var pingUrls = []string{
 	// "http://127.0.0.1:5000/gen_204", // Virtual python plug can respond to the ping, it will fail every third req
