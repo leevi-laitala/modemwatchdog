@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
-	"log"
 )
 
 func ping() bool {
@@ -19,6 +20,24 @@ func ping() bool {
 
 	// If connection to all urls fail, internet access is probably down
 	return false
+}
+
+func waitModemBoot() error {
+	deadline := time.After(modemBootTimeDeadline * time.Second)
+	ticker := time.NewTicker(pingInterval * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-deadline:
+			return fmt.Errorf("waiting for internet connectivity exceeded %d second timeout", modemBootTimeDeadline)
+		case <-ticker.C:
+			if ping() {
+				log.Println("internet connectivity restored")
+				return nil
+			}
+		}
+	}
 }
 
 func modemwatchdog(plug SmartPlug) {
@@ -37,6 +56,11 @@ func modemwatchdog(plug SmartPlug) {
 			err := powercycleModem(plug)
 			if err != nil {
 				log.Printf("Powercycle failed: %v", err)
+			}
+
+			err = waitModemBoot()
+			if err != nil {
+				log.Printf("%v", err)
 			}
 		}
 

@@ -7,6 +7,8 @@ const ( // Time vars are in seconds
 	powercycleRetries   = 10 // Times failed connection is retried
 	powercycleRetryWait = 5  // Time between retries
 
+	modemBootTimeDeadline = 30 // Max wait time until pinging starts after powercycle
+
 	logSyslogAddr     = "" // Blank uses stdout
 	logSyslogPort     = 514
 	logSyslogProtocol = "tcp"
