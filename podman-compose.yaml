@@ -1,0 +1,11 @@
+services:
+  modemwatchdog:
+    image: modemwatchdog:latest
+    container_name: modemwatchdog
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro,Z
